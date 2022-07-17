@@ -1,2 +1,2 @@
 def LibraryFunction(x: int) -> int:
-    return x * 4
+    return x * 5
