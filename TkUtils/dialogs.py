@@ -12,13 +12,18 @@ class DialogBase(ttk.Frame, ABC):
             self.standalone = False
 
             # The parent for all widgets in this frame is self
-            self.parent = self
+            self.parent = parent
 
             # Initialise the base class with the parent of this frame
             super().__init__(parent)
 
             # Lay this frame out in the grid
-            self.parent.grid(row=row, column=column)
+            self.grid(row=row, column=column, padx=5, pady=5, sticky=tk.NSEW)
+
+            # Configure the row and column being added
+            self.parent.columnconfigure(column, weight=1)
+            self.parent.rowconfigure(row, weight=1)
+
         else:
             # This widget is standalone
             self.standalone = True
@@ -34,6 +39,13 @@ class DialogBase(ttk.Frame, ABC):
 
             # Set the minimium size of the widget
             self.parent.minsize(1024, 768)
+
+            # Lay this frame out in the grid
+            self.grid(row=0, column=0, padx=10, pady=3, sticky=tk.NSEW)
+
+            # Configure the row and column being added
+            self.parent.columnconfigure(0, weight=1)
+            self.parent.rowconfigure(0, weight=1)
 
         # Set up the dialog
         self.body()
@@ -63,11 +75,11 @@ class KeyValDialog(DialogBase):
         # Loop thorugh the label dict
         for count, (label, value) in enumerate(self.labels.items()):
             # Create the left frame for this row
-            leftFrame = ttk.Frame(self.parent)
+            leftFrame = ttk.Frame(self)
             leftFrame.grid(row=count, column=0, padx=10, pady=3, sticky=tk.W)
 
             # Create the right frame for this row
-            rightFrame = ttk.Frame(self.parent)
+            rightFrame = ttk.Frame(self)
             rightFrame.grid(row=count, column=1, padx=10, pady=3, sticky=tk.W)
 
             # Add the label to the left frame
@@ -79,18 +91,18 @@ class KeyValDialog(DialogBase):
             theValue.pack()
 
             # Configure the row to auto expand
-            self.parent.rowconfigure(count, weight=1, minsize=26)
+            self.rowconfigure(count, weight=1, minsize=26)
 
         # Configure the left column to be fixed width
-        self.parent.columnconfigure(0, weight=0, minsize=150)
+        self.columnconfigure(0, weight=0, minsize=150)
 
         # Configure the right column to expand
-        self.parent.columnconfigure(1, weight=1, minsize=150)
+        self.columnconfigure(1, weight=1, minsize=150)
 
         # Only create the Close button if this is a standalone widget
         if self.standalone:
             # Create a frame for the Close button
-            frame = ttk.Frame(self.parent)
+            frame = ttk.Frame(self)
             frame.grid(row=len(self.labels), column=1, padx=10, pady=3, sticky=tk.E)
 
             # Create the Close button
@@ -98,7 +110,7 @@ class KeyValDialog(DialogBase):
             self.close.pack()
 
             # Configure the button row
-            self.parent.rowconfigure(len(self.labels), weight=1, minsize=26)
+            self.rowconfigure(len(self.labels), weight=1, minsize=26)
 
 class TreeViewDialog(DialogBase):
     def __init__(self, title: str, headings: list[str], hierarchy: Mapping[str, Mapping[str, Any]], parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
@@ -112,20 +124,12 @@ class TreeViewDialog(DialogBase):
         super().__init__(title, parent, row, column)
 
     def body(self) -> None:
-        # Create a frame to contain the TreeView and Scrollbar
-        tvFrame = ttk.Frame(self.parent)
-        tvFrame.grid(row=0, column=0, padx=10, pady=3, sticky=tk.NSEW)
-
-        # Configure this grid cell to stretch in both x and y
-        self.parent.rowconfigure(0, weight=1)
-        self.parent.columnconfigure(0, weight=1)
-
         # Create the TreeView Scrollbar
-        scrollbar = ttk.Scrollbar(tvFrame)
+        scrollbar = ttk.Scrollbar(self)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Create the TreeView
-        treeview = ttk.Treeview(tvFrame, columns=self.headings[1:], yscrollcommand=scrollbar.set)
+        treeview = ttk.Treeview(self, columns=self.headings[1:], yscrollcommand=scrollbar.set)
 
         # Confirgure the Scrollbar to scroll the TreeView
         scrollbar.config(command=treeview.yview)
