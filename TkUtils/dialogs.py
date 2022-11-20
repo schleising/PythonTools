@@ -4,20 +4,41 @@ from abc import ABC, abstractmethod
 import tkinter as tk
 import tkinter.ttk as ttk
 
-class DialogBase(ABC, ttk.Frame):
-    def __init__(self, title: str, parent: tk.Tk | None) -> None:
+class DialogBase(ttk.Frame, ABC):
+    def __init__(self, title: str, parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
         # If there is no parent window, create one
-        if parent is not None:
-            self.parent = parent
+        if parent is not None and row is not None and column is not None:
+            # This is not a standalone widget
+            self.standalone = False
+
+            # The parent for all widgets in this frame is self
+            self.parent = self
+
+            # Initialise the base class with the parent of this frame
+            super().__init__(parent)
+
+            # Lay this frame out in the grid
+            self.parent.grid(row=row, column=column)
         else:
+            # This widget is standalone
+            self.standalone = True
+
+            # Create a Tk app as the parent
             self.parent = tk.Tk()
 
-        # Set the wondow title
-        self.parent.title(title)
+            # Initialise the base class with the Tk app as parent
+            super().__init__(self.parent)
+            
+            # Set the window title
+            self.parent.title(title)
+
+            # Set the minimium size of the widget
+            self.parent.minsize(1024, 768)
 
         # Set up the dialog
         self.body()
 
+    # This method must  be overridden
     @abstractmethod
     def body(self) -> None:
         pass
@@ -31,12 +52,12 @@ class DialogBase(ABC, ttk.Frame):
         self.parent.destroy()
 
 class KeyValDialog(DialogBase):
-    def __init__(self, title: str, labels: Mapping[str, Any], parent: tk.Tk | None = None) -> None:
+    def __init__(self, title: str, labels: Mapping[str, Any], parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
         # Set the labels
         self.labels = labels
 
         # Call base class init
-        super().__init__(title, parent)
+        super().__init__(title, parent, row, column)
 
     def body(self) -> None:
         # Loop thorugh the label dict
@@ -60,25 +81,27 @@ class KeyValDialog(DialogBase):
             # Configure the row to auto expand
             self.parent.rowconfigure(count, weight=1, minsize=26)
 
-        # Create a frame for the Close button
-        frame = ttk.Frame(self.parent)
-        frame.grid(row=len(self.labels), column=1, padx=10, pady=3, sticky=tk.E)
-
-        # Create the Close button
-        self.close = ttk.Button(frame, text='Close', command=self.onClose)
-        self.close.pack()
-
-        # Configure the button row
-        self.parent.rowconfigure(len(self.labels), weight=1, minsize=26)
-
         # Configure the left column to be fixed width
         self.parent.columnconfigure(0, weight=0, minsize=150)
 
         # Configure the right column to expand
         self.parent.columnconfigure(1, weight=1, minsize=150)
 
+        # Only create the Close button if this is a standalone widget
+        if self.standalone:
+            # Create a frame for the Close button
+            frame = ttk.Frame(self.parent)
+            frame.grid(row=len(self.labels), column=1, padx=10, pady=3, sticky=tk.E)
+
+            # Create the Close button
+            self.close = ttk.Button(frame, text='Close', command=self.onClose)
+            self.close.pack()
+
+            # Configure the button row
+            self.parent.rowconfigure(len(self.labels), weight=1, minsize=26)
+
 class TreeViewDialog(DialogBase):
-    def __init__(self, title: str, headings: list[str], hierarchy: Mapping[str, Mapping[str, Any]], parent: tk.Tk | None = None) -> None:
+    def __init__(self, title: str, headings: list[str], hierarchy: Mapping[str, Mapping[str, Any]], parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
         # Set the labels
         self.hierarchy = hierarchy
 
@@ -86,14 +109,10 @@ class TreeViewDialog(DialogBase):
         self.headings = headings
 
         # Call base class init
-        super().__init__(title, parent)
+        super().__init__(title, parent, row, column)
 
     def body(self) -> None:
-        # Set the minimum size of the window
-        self.parent.minsize(1024, 768)
-
         # Create a frame to contain the TreeView and Scrollbar
-
         tvFrame = ttk.Frame(self.parent)
         tvFrame.grid(row=0, column=0, padx=10, pady=3, sticky=tk.NSEW)
 
@@ -127,16 +146,18 @@ class TreeViewDialog(DialogBase):
         # Pack the TreeView in the frame allowing it to expand to fill both x and y
         treeview.pack(fill=tk.BOTH, expand=tk.TRUE)
 
-        # Create a frame for the Close button
-        frame = ttk.Frame(self.parent)
-        frame.grid(row=1, column=0, padx=10, pady=3, sticky=tk.E)
+        # Only create the Close button if this is a standalone widget
+        if self.standalone:
+            # Create a frame for the Close button
+            frame = ttk.Frame(self.parent)
+            frame.grid(row=1, column=0, padx=10, pady=3, sticky=tk.E)
 
-        # Create the Close button
-        self.close = ttk.Button(frame, text='Close', command=self.onClose)
-        self.close.pack()
+            # Create the Close button
+            self.close = ttk.Button(frame, text='Close', command=self.onClose)
+            self.close.pack()
 
-        # Configure the button row
-        self.parent.rowconfigure(1, weight=0, minsize=26)
+            # Configure the button row
+            self.parent.rowconfigure(1, weight=0, minsize=26)
 
 if __name__ == '__main__':
     hierarchy: dict[str, dict[str, str]] = {
@@ -157,10 +178,14 @@ if __name__ == '__main__':
         },
     }
 
+    # Create the root window
+    root = tk.Tk()
+
     # Test the Key/Val dialog
-    dlg = KeyValDialog('Key/Val Dialog', {'One': 'First', 'Two': 'Second', 'Three': 'Third', 'Four': 'Fourth', 'Five': 'Fifth'})
-    dlg.run()
+    widget1 = KeyValDialog('Key/Val Dialog', {'One': 'First', 'Two': 'Second', 'Three': 'Third', 'Four': 'Fourth', 'Five': 'Fifth'}, parent=root, row=0, column=0)
 
     # Test the Treeview dialog
-    dlg = TreeViewDialog('TreeView Dialog', ['Keys', 'Values'], hierarchy)
-    dlg.run()
+    widget2 = TreeViewDialog('TreeView Dialog', ['Keys', 'Values'], hierarchy, parent=root, row=1, column=0)
+
+    # Start the main loop
+    root.mainloop()
