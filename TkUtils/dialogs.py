@@ -1,24 +1,42 @@
 from typing import Any, Mapping
+from abc import ABC, abstractmethod
 
 import tkinter as tk
 import tkinter.ttk as ttk
 
-class KeyValDialog():
-    def __init__(self, title: str, labels: Mapping[str, Any], master: tk.Tk | None = None) -> None:
+class DialogBase(ABC):
+    def __init__(self, title: str, master: tk.Tk | None) -> None:
         # If there is no master window, create one
         if master is not None:
             self.master = master
         else:
             self.master = tk.Tk()
 
-        # Set the labels
-        self.labels = labels
-
         # Set the wondow title
         self.master.title(title)
 
         # Set up the dialog
         self.body()
+
+    @abstractmethod
+    def body(self) -> None:
+        pass
+
+    def run(self) -> None:
+        # Can be used to run the dialog if the script would otherwise quit
+        self.master.mainloop()
+
+    def onClose(self) -> None:
+        # Destroy the window and all widgets
+        self.master.destroy()
+
+class KeyValDialog(DialogBase):
+    def __init__(self, title: str, labels: Mapping[str, Any], master: tk.Tk | None = None) -> None:
+        # Set the labels
+        self.labels = labels
+
+        # Call base class init
+        super().__init__(title, master)
 
     def body(self) -> None:
         # Loop thorugh the label dict
@@ -59,15 +77,90 @@ class KeyValDialog():
         # Configure the right column to expand
         self.master.columnconfigure(1, weight=1, minsize=150)
 
-    def run(self) -> None:
-        # Can be used to run the dialog if the script would otherwise quit
-        self.master.mainloop()
+class TreeViewDialog(DialogBase):
+    def __init__(self, title: str, headings: list[str], hierarchy: Mapping[str, Mapping[str, Any]], master: tk.Tk | None = None) -> None:
+        # Set the labels
+        self.hierarchy = hierarchy
 
-    def onClose(self) -> None:
-        # Destroy the window and all widgets
-        self.master.destroy()
+        # Set the headings
+        self.headings = headings
+
+        # Call base class init
+        super().__init__(title, master)
+
+    def body(self) -> None:
+        # Set the minimum size of the window
+        self.master.minsize(1024, 768)
+
+        # Create a frame to contain the TreeView and Scrollbar
+
+        tvFrame = ttk.Frame(self.master)
+        tvFrame.grid(row=0, column=0, padx=10, pady=3, sticky=tk.NSEW)
+
+        # Configure this grid cell to stretch in both x and y
+        self.master.rowconfigure(0, weight=1)
+        self.master.columnconfigure(0, weight=1)
+
+        # Create the TreeView Scrollbar
+        scrollbar = ttk.Scrollbar(tvFrame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Create the TreeView
+        treeview = ttk.Treeview(tvFrame, columns=self.headings[1:], yscrollcommand=scrollbar.set)
+
+        # Confirgure the Scrollbar to scroll the TreeView
+        scrollbar.config(command=treeview.yview)
+
+        # Set the Treeview headings
+        for colCount, heading in enumerate(self.headings):
+            treeview.heading(f'#{colCount}', text=heading)
+
+        # Insert the rows
+        for key, vals in self.hierarchy.items():
+            # Insert the parent row
+            parent = treeview.insert('', tk.END, None, text=key)
+
+            # Insert the child rows
+            for label, val in vals.items():
+                treeview.insert(parent, tk.END, None, text=label, values=[val])
+
+        # Pack the TreeView in the frame allowing it to expand to fill both x and y
+        treeview.pack(fill=tk.BOTH, expand=tk.TRUE)
+
+        # Create a frame for the Close button
+        frame = ttk.Frame(self.master)
+        frame.grid(row=1, column=0, padx=10, pady=3, sticky=tk.E)
+
+        # Create the Close button
+        self.close = ttk.Button(frame, text='Close', command=self.onClose)
+        self.close.pack()
+
+        # Configure the button row
+        self.master.rowconfigure(1, weight=0, minsize=26)
 
 if __name__ == '__main__':
-    # Test the dialog
+    hierarchy: dict[str, dict[str, str]] = {
+        'One' : {
+            'FirstItem': '1st',
+            'SecondItem': '2nd',
+            'ThirdItem': '3rd',
+        },
+        'Two': {
+            'FourthItem': '4th',
+            'FifthItem': '5th',
+        },
+        'Three': {
+        },
+        'Four': {
+            'SixthItem': '6th',
+            'SeventhItem': '7th',
+        },
+    }
+
+    # Test the Key/Val dialog
     dlg = KeyValDialog('Key/Val Dialog', {'One': 'First', 'Two': 'Second', 'Three': 'Third', 'Four': 'Fourth', 'Five': 'Fifth'})
+    dlg.run()
+
+    # Test the Treeview dialog
+    dlg = TreeViewDialog('TreeView Dialog', ['Keys', 'Values'], hierarchy)
     dlg.run()
