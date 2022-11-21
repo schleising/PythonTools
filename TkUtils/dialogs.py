@@ -140,8 +140,14 @@ class TreeViewDialog(DialogBase):
 
         # Insert the rows
         for key, vals in self.hierarchy.items():
+            # If there is only one item open it at startup
+            if len(self.hierarchy) == 1:
+                openNode = True
+            else:
+                openNode = False
+
             # Insert the parent row
-            parent = treeview.insert('', tk.END, None, text=key)
+            parent = treeview.insert('', tk.END, None, text=key, open=openNode)
 
             # Insert the child rows
             for label, val in vals.items():
