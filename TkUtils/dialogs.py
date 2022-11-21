@@ -114,14 +114,38 @@ class KeyValDialog(DialogBase):
 
 class TreeViewDialog(DialogBase):
     def __init__(self, title: str, headings: list[str], hierarchy: Mapping[str, Mapping[str, Any]], parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
-        # Set the labels
-        self.hierarchy = hierarchy
-
         # Set the headings
         self.headings = headings
 
         # Call base class init
         super().__init__(title, parent, row, column)
+
+        # Set the labels
+        self.hierarchy = hierarchy
+
+    @property
+    def hierarchy(self) -> None:
+        raise ValueError
+
+    @hierarchy.setter
+    def hierarchy(self, newHierarchy: Mapping[str, Mapping[str, Any]]) -> None:
+        # Delete all items in the TreeView
+        self.treeview.delete(*self.treeview.get_children())
+
+        # Insert the rows
+        for key, vals in newHierarchy.items():
+            # If there is only one item open it at startup
+            if len(newHierarchy) == 1:
+                openNode = True
+            else:
+                openNode = False
+
+            # Insert the parent row
+            parent = self.treeview.insert('', tk.END, None, text=key, open=openNode)
+
+            # Insert the child rows
+            for label, val in vals.items():
+                self.treeview.insert(parent, tk.END, None, text=label, values=[val])
 
     def body(self) -> None:
         # Create the TreeView Scrollbar
@@ -129,32 +153,17 @@ class TreeViewDialog(DialogBase):
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Create the TreeView
-        treeview = ttk.Treeview(self, columns=self.headings[1:], yscrollcommand=scrollbar.set)
+        self.treeview = ttk.Treeview(self, columns=self.headings[1:], yscrollcommand=scrollbar.set)
 
         # Confirgure the Scrollbar to scroll the TreeView
-        scrollbar.config(command=treeview.yview)
+        scrollbar.config(command=self.treeview.yview)
 
         # Set the Treeview headings
         for colCount, heading in enumerate(self.headings):
-            treeview.heading(f'#{colCount}', text=heading)
-
-        # Insert the rows
-        for key, vals in self.hierarchy.items():
-            # If there is only one item open it at startup
-            if len(self.hierarchy) == 1:
-                openNode = True
-            else:
-                openNode = False
-
-            # Insert the parent row
-            parent = treeview.insert('', tk.END, None, text=key, open=openNode)
-
-            # Insert the child rows
-            for label, val in vals.items():
-                treeview.insert(parent, tk.END, None, text=label, values=[val])
+            self.treeview.heading(f'#{colCount}', text=heading)
 
         # Pack the TreeView in the frame allowing it to expand to fill both x and y
-        treeview.pack(fill=tk.BOTH, expand=tk.TRUE)
+        self.treeview.pack(fill=tk.BOTH, expand=tk.TRUE)
 
         # Only create the Close button if this is a standalone widget
         if self.standalone:
