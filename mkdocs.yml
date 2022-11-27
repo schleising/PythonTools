@@ -1,0 +1,18 @@
+site_name: Python Tools
+
+theme:
+  name: material
+
+plugins:
+  - mkdocstrings
+
+watch:
+  - Utils
+  - TkUtils
+
+nav:
+  - Home: index.md
+  - Utils:
+    - Timer Context Manager: Utils/Timer.md
+  - TkUtils:
+    - Custom Tk Dialogs: TkUtils/dialogs.md

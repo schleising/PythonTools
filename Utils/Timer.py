@@ -1,6 +1,19 @@
+"""Used to time long processes, 
+
+
+###Example use:
+    with Timer(task_string):
+        Do long process
+"""
+
 import time
 
 class Timer:
+    """Create a timer as a context manager
+
+    Args:
+        taskString (str): String describing the process
+    """
     def __init__(self, taskString: str) -> None:
         # Create a Timer with a task name
         self.taskString = taskString

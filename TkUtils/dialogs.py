@@ -1,3 +1,8 @@
+"""##Custom Dialogs Created from a Common Dialog Base
+- `KeyValueDialog` - Creates a key/value dialog from a Mapping
+- `TreeViewDialog` - Creates a Tree View dialog from a two level hierarchy
+"""
+
 from typing import Any, Mapping
 from abc import ABC, abstractmethod
 
@@ -5,6 +10,16 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 class DialogBase(ttk.Frame, ABC):
+    """Abstract base class for all dialogs inherited from ttk::Frame
+
+    Allows the user to create a standalone dialog or a widget to be added to another, larger app by inheriting from this class
+
+    Args:
+        title (str): Title that the dialog will have if standalone
+        parent (tk.Tk | None, optional): Parent if any, None if this is a standalone dialog. Defaults to None.
+        row (int | None, optional): If this is in a parent, the grid row it will be in. Defaults to None.
+        column (int | None, optional): If this is in a parent, the grid column it will be in. Defaults to None.
+    """
     def __init__(self, title: str, parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
         # If there is no parent window, create one
         if parent is not None and row is not None and column is not None:
@@ -53,17 +68,32 @@ class DialogBase(ttk.Frame, ABC):
     # This method must  be overridden
     @abstractmethod
     def body(self) -> None:
+        """Abstract method, must be overridden by classes inheriting from DialogBase
+        """
         pass
 
     def run(self) -> None:
-        # Can be used to run the dialog if the script would otherwise quit
+        """Can be used to run the dialog if the script would otherwise quit
+        """
         self.parent.mainloop()
 
     def onClose(self) -> None:
-        # Destroy the window and all widgets
+        """Called when the dialog is closed, destroys the window and all widgets
+        """
         self.parent.destroy()
 
 class KeyValDialog(DialogBase):
+    """Creates a Key/Value dialog
+
+    This allows the user to create a simple dialog to show label/value pairs
+
+    Args:
+        title (str): Title of the dialog if standalone
+        labels (Mapping[str, Any]): The label/value pair data to be displayed in the dialog
+        parent (tk.Tk | None, optional): Parent window, if any. Defaults to None.
+        row (int | None, optional): If this is in a parent, the grid row it will be in. Defaults to None.
+        column (int | None, optional): If this is in a parent, the grid column it will be in. Defaults to None.
+    """
     def __init__(self, title: str, labels: Mapping[str, Any], parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
         # Set the labels
         self.labels = labels
@@ -72,6 +102,8 @@ class KeyValDialog(DialogBase):
         super().__init__(title, parent, row, column)
 
     def body(self) -> None:
+        """Generates and lays out the dialog widgets, called by the base class on initialisation
+        """
         # Loop thorugh the label dict
         for count, (label, value) in enumerate(self.labels.items()):
             # Create the left frame for this row
@@ -113,6 +145,16 @@ class KeyValDialog(DialogBase):
             self.rowconfigure(len(self.labels), weight=1, minsize=26)
 
 class TreeViewDialog(DialogBase):
+    """Creates a TreeViewDialog
+
+    Args:
+        title (str): Title of the dialog if standalone
+        headings (list[str]): The column headings for the Tree View
+        hierarchy (Mapping[str, Mapping[str, Any]]): The two level mapping for the Tree View data
+        parent (tk.Tk | None, optional): Parent window, if any. Defaults to None.
+        row (int | None, optional): If this is in a parent, the grid row it will be in. Defaults to None.
+        column (int | None, optional): If this is in a parent, the grid column it will be in. Defaults to None.
+    """
     def __init__(self, title: str, headings: list[str], hierarchy: Mapping[str, Mapping[str, Any]], parent: tk.Tk | None = None, row: int | None = None, column: int | None = None) -> None:
         # Set the headings
         self.headings = headings
@@ -125,6 +167,14 @@ class TreeViewDialog(DialogBase):
 
     @property
     def hierarchy(self) -> None:
+        """Used to update the hierarchy after initialisation, write only
+
+        Args:
+            newHierarchy (Mapping[str, Mapping[str, Any]]): The two level mapping for the Tree View data
+
+        Raises:
+            ValueError: Raised if the user tries to get the hierarchy
+        """
         raise ValueError
 
     @hierarchy.setter
@@ -148,6 +198,8 @@ class TreeViewDialog(DialogBase):
                 self.treeview.insert(parent, tk.END, None, text=label, values=[val])
 
     def body(self) -> None:
+        """Generates and lays out the dialog widgets, called by the base class on initialisation
+        """
         # Create the TreeView Scrollbar
         scrollbar = ttk.Scrollbar(self)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
