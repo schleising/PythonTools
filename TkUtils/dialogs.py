@@ -3,8 +3,9 @@
 - `TreeViewDialog` - Creates a Tree View dialog from a two level hierarchy
 """
 
-from typing import Any, Mapping
+from typing import Any
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 
 import tkinter as tk
 import tkinter.ttk as ttk
