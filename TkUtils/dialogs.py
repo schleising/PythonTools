@@ -1,4 +1,5 @@
-"""##Custom Dialogs Created from a Common Dialog Base
+"""Custom Dialogs Created from a Common Dialog Base
+
 - `KeyValueDialog` - Creates a key/value dialog from a Mapping
 - `TreeViewDialog` - Creates a Tree View dialog from a two level hierarchy
 """

@@ -1,9 +1,12 @@
-"""Used to time long processes, 
+"""Used to time long processes
 
+!!! Example
+    Use the context manager as follows
 
-###Example use:
+    ``` py
     with Timer(task_string):
         Do long process
+    ```
 """
 
 import time

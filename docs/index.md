@@ -5,6 +5,6 @@ Various helper tools created over time
 ## Modules
 
 - Utils
-    - [Timer](Utils/Timer.md)
+    - [Timer Context Manager](Utils/Timer.md)
 - TkUtils
-    - [Dialogs](TkUtils/dialogs.md)
+    - [Custom Tk Dialogs](TkUtils/dialogs.md)
